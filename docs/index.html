@@ -50,6 +50,10 @@ function run()
 			document.getElementById('outp').value = "ERROR: Does not look like Data Dump string";
 		} else {
 			let data = JSON.parse(obj[0].cmt);
+			function naturalSort(a, b) {
+				return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
+			}
+
 			function map(obj, fn) {
 				if(Array.isArray(obj)) {
 					return obj.map(fn).filter(function(v) {
@@ -71,7 +75,8 @@ function run()
 					});
 				} else {
 					const result = {};
-					for(let key in obj) {
+					const keys = Object.keys(obj).sort(naturalSort);
+					for(let key of keys) {
 						result[key] = fn(obj[key]);
 					}
 					return result;
@@ -83,7 +88,7 @@ function run()
 					logistics_flags: map(data.logistics_flags, e => ({
 						flag: e.flag,
 						default: e.default
-					})),
+					})).sort((a, b) => naturalSort(a.flag, b.flag)),
 					values: map(data.values, e => ({
 						name: e.name,
 						tag: e.tag

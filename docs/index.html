@@ -24,7 +24,15 @@ a:hover { color: #f26c43 }
 <tr><th style="padding:6pt">Data String</th></tr>
 <tr><td style="padding:6pt"><textarea type="text" id="inp" rows=5 cols=120></textarea></td></tr>
 <tr><th style="padding:6pt">Convert to JSON</th></tr>
-<tr><td style="padding:6pt"><button style="width:100%;height:4em" onclick="run();">Convert to JSON</button></td></tr>
+<tr>
+	<td style="padding:6pt">
+		<select id="mode" style="width:100%; height:2em; text-align: center; margin-bottom: 3pt;">
+			<option value="desynced_tools">Desynced Tools</option>
+			<option value="raw">Full output</option>
+		</select>
+		<button style="width:100%;height:2em" onclick="run();">Convert to JSON</button>
+	</td>
+</tr>
 <tr><th style="padding:6pt">Output</th></tr>
 <tr><td style="padding:6pt"><textarea type="text" id="outp" rows=24 cols=120 readonly></textarea></td></tr>
 </table>
@@ -33,16 +41,98 @@ a:hover { color: #f26c43 }
 <script type="text/javascript">
 function run()
 {
-	var str = document.getElementById('inp').value, jsonobj;
+	let str = document.getElementById('inp').value, jsonobj;
 	try { jsonobj = JSON.parse(str); } catch { }
 	try
 	{
-		var info = {}, obj = DesyncedStringToObject(str, info);
+		let info = {}, obj = DesyncedStringToObject(str, info);
 		if (obj.length !== 1 || obj[0].op !== "wait" || !obj[0].cmt) {
 			document.getElementById('outp').value = "ERROR: Does not look like Data Dump string";
 		} else {
-			var data = JSON.parse(obj[0].cmt);
-			document.getElementById('outp').value = JSON.stringify(data, null, 4);
+			let data = JSON.parse(obj[0].cmt);
+			function map(obj, fn) {
+				if(Array.isArray(obj)) {
+					return obj.map(fn).filter(function(v) {
+						if (v == null) {
+							return false;
+						}
+
+						if (Array.isArray(v) && v.length === 0) {
+							return false;
+						}
+
+						for (const key in v) {
+							if (v[key]) {
+								return true;
+							}
+						}
+
+						return false;
+					});
+				} else {
+					const result = {};
+					for(let key in obj) {
+						result[key] = fn(obj[key]);
+					}
+					return result;
+				}
+			}
+
+			function desynced_tools(data) {
+				return {
+					logistics_flags: map(data.logistics_flags, e => ({
+						flag: e.flag,
+						default: e.default
+					})),
+					values: map(data.values, e => ({
+						name: e.name,
+						tag: e.tag
+					})),
+					frames: map(data.frames, e => ({
+						name: e.name,
+						type: e.type,
+						flags: e.flags,
+						size: e.size,
+						visual: e.visual,
+						slots: e.slots,
+					})),
+					components: map(data.components, e => ({
+						name: e.name,
+						attachment_size: e.attachment_size,
+						visual: e.visual,
+					})),
+					items: map(data.items, e => ({
+						name: e.name,
+						visual: e.visual,
+						slot_type: e.slot_type,
+						tag: e.tag,
+						stack_size: e.stack_size
+					})),
+					visuals: map(data.visuals, e => ({
+						flags: e.flags,
+						sockets: e.sockets,
+						tile_size: e.tile_size,
+					})),
+					instructions: map(data.instructions, e => ({
+						name: e.name,
+						desc: e.desc,
+						category: e.category,
+						args: e.args,
+						exec_arg: e.exec_arg,
+					})),
+					techs: map(data.techs, e => ({
+						name: e.name
+					})),
+					update_mapping: data.update_mapping,
+				}
+			}
+
+			const mode = document.getElementById('mode').value;
+			if (mode == 'desynced_tools') {
+				data = desynced_tools(data);
+			}
+			
+			document.getElementById('outp').value = JSON.stringify(data, null, 2);
 		}
 	}
 	catch (e)

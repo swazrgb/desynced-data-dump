@@ -73,7 +73,7 @@ function run()
 
 						return false;
 					});
-				} else {
+				} else if (obj != null) {
 					const result = {};
 					const keys = Object.keys(obj).sort(naturalSort);
 					for(let key of keys) {
@@ -86,27 +86,41 @@ function run()
 			function desynced_tools(data) {
 				return {
 					logistics_flags: map(data.logistics_flags, e => ({
+						base_id: e.base_id,
 						flag: e.flag,
 						default: e.default
 					})).sort((a, b) => naturalSort(a.flag, b.flag)),
 					values: map(data.values, e => ({
+						base_id: e.base_id,
 						name: e.name,
 						tag: e.tag
 					})),
 					frames: map(data.frames, e => ({
+						base_id: e.base_id,
 						name: e.name,
+						desc: e.desc,
 						type: e.type,
 						flags: e.flags,
 						size: e.size,
 						visual: e.visual,
 						slots: e.slots,
+						start_disconnected: e.start_disconnected,
 					})),
 					components: map(data.components, e => ({
+						base_id: e.base_id,
 						name: e.name,
 						attachment_size: e.attachment_size,
 						visual: e.visual,
+						slots: e.slots,
+						registers: map(e.registers, reg => ({
+							type: reg.type,
+							tip: reg.tip,
+							read_only: reg.read_only,
+							filter: reg.filter,
+						})),
 					})),
 					items: map(data.items, e => ({
+						base_id: e.base_id,
 						name: e.name,
 						visual: e.visual,
 						slot_type: e.slot_type,
@@ -114,11 +128,13 @@ function run()
 						stack_size: e.stack_size
 					})),
 					visuals: map(data.visuals, e => ({
+						base_id: e.base_id,
 						flags: e.flags,
 						sockets: e.sockets,
 						tile_size: e.tile_size,
 					})),
 					instructions: map(data.instructions, e => ({
+						base_id: e.base_id,
 						name: e.name,
 						desc: e.desc,
 						category: e.category,
@@ -126,6 +142,7 @@ function run()
 						exec_arg: e.exec_arg,
 					})),
 					techs: map(data.techs, e => ({
+						base_id: e.base_id,
 						name: e.name
 					})),
 					update_mapping: data.update_mapping,
